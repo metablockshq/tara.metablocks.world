@@ -1,0 +1,12 @@
+{
+  "name": "@kyra/hooks",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "swr": "^1.1.2"
+  },
+  "peerDependencies": {
+    "react": "^17.0.2"
+  }
+}
