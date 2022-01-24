@@ -1,4 +1,5 @@
 import {
+  AnchorButton,
   InputGroup,
   NavbarDivider,
   Alignment,
@@ -10,14 +11,16 @@ import {
   Navbar,
   Position,
 } from "@blueprintjs/core";
+import { useMemo } from "react";
 import { Popover2 } from "@blueprintjs/popover2";
 import { Select, ItemRenderer } from "@blueprintjs/select";
 import Link from "next/link";
+import { useRouter } from "next/router";
 
 import { networks } from "~/config";
 import { retractMiddle } from "@kyra/utils/string";
 import { useAtom } from "@kyra/hooks";
-import { useWallet, useWalletModal } from "@kyra/solana/lib/hooks";
+import { useWallet, useWalletModal } from "@kyra/solana/hooks";
 import networkState, { switchNetwork } from "~/domain/network";
 
 function SolanaConnectButton() {
@@ -26,6 +29,7 @@ function SolanaConnectButton() {
   return (
     <Button
       loading={connecting}
+      intent={Intent.PRIMARY}
       onClick={() => !connected && setVisible(true)}
       icon="user"
       text="Connect wallet"
@@ -33,7 +37,9 @@ function SolanaConnectButton() {
   );
 }
 
-function ConnectedPopover({ children, disconnect }) {
+function ConnectedButton({}) {
+  const { disconnect, publicKey } = useWallet();
+
   return (
     <Popover2
       content={
@@ -43,12 +49,19 @@ function ConnectedPopover({ children, disconnect }) {
       }
       position={Position.BOTTOM_RIGHT}
     >
-      {children}
+      <Button
+        icon="user"
+        minimal={true}
+        intent={Intent.PRIMARY}
+        rightIcon="caret-down"
+        text={publicKey && retractMiddle(publicKey.toString(), 6)}
+      />
     </Popover2>
   );
 }
 
-function NetworkSelectPopover({ children }) {
+function NetworkSelectPopover() {
+  const { selectedNetwork } = useAtom(networkState);
   return (
     <Popover2
       content={
@@ -64,85 +77,63 @@ function NetworkSelectPopover({ children }) {
       }
       position={Position.BOTTOM_RIGHT}
     >
-      {children}
+      <Button
+        icon="globe-network"
+        minimal={true}
+        className="mr-2"
+        rightIcon="caret-down"
+        text={selectedNetwork.label}
+      />
     </Popover2>
   );
 }
 
-function UniverseSearch() {
+function ViewNftsButton() {
+  const text = "View NFTs";
+  const icon = "settings";
+  const href = "/view-nfts";
+  const router = useRouter();
+  const minimal = true;
+  const onClick = (e) => {
+    e.preventDefault();
+    router.push(href);
+  };
+
   return (
-    <InputGroup
-      className="mr-2"
-      placeholder="Search for a universe"
-      leftIcon="search"
+    <AnchorButton
+      text={text}
+      minimal={minimal}
+      icon={icon}
+      href="/view-nfts"
+      disabled={router.pathname === href}
+      onClick={onClick}
     />
+  );
+}
+
+function Heading() {
+  return (
+    <Navbar.Heading className="font-bold">
+      <Link href="/">
+        <a className="hover:no-underline text-slate-800">Tara by Meta Blocks</a>
+      </Link>
+    </Navbar.Heading>
   );
 }
 
 function Nav() {
   const { wallet } = useWallet();
 
-  const { selectedNetwork } = useAtom(networkState);
-
   return (
-    <div className="pb-8">
+    <div className="">
       <Navbar fixedToTop>
         <Navbar.Group align={Alignment.LEFT}>
-          <Navbar.Heading className="font-bold">
-            <Link href="/" className="hover:no-underline">
-              ✨ Meta Blocks Universes ⍺
-            </Link>
-          </Navbar.Heading>
+          <Heading />
         </Navbar.Group>
         <Navbar.Group align={Alignment.RIGHT} className="">
-          <UniverseSearch />
-
-          <Link
-            className={[
-              Classes.BUTTON,
-              Classes.MINIMAL,
-              `${Classes.ICON}-star`,
-              "mr-2",
-            ].join(" ")}
-            href="/tara"
-          >
-            Integration Demo
-          </Link>
-
-          <Link
-            className={[
-              Classes.BUTTON,
-              Classes.MINIMAL,
-              `${Classes.ICON}-new-object`,
-              "mr-2",
-            ].join(" ")}
-            href="/create-universe"
-          >
-            Create Universe
-          </Link>
-
-          <NetworkSelectPopover>
-            <Button
-              icon="globe-network"
-              minimal={true}
-              className="mr-2"
-              rightIcon="caret-down"
-              text={selectedNetwork.label}
-            />
-          </NetworkSelectPopover>
-
+          <NetworkSelectPopover />
           {!wallet && <SolanaConnectButton />}
-
-          {wallet && (
-            <ConnectedPopover disconnect={disconnect}>
-              <Button
-                intent={Intent.PRIMARY}
-                icon="user"
-                rightIcon="caret-down"
-                text={retractMiddle(wallet.publicKey.toString(), 8)}
-              />
-            </ConnectedPopover>
-          )}
+          {wallet && <ConnectedButton />}
         </Navbar.Group>
       </Navbar>
     </div>

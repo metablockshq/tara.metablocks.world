@@ -91,6 +91,7 @@ const useWindowSize = () => {
     width: undefined,
     height: undefined,
   });
+
   useEffect(() => {
     // Handler to call on window resize
     function handleResize() {
