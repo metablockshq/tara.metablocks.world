@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { useConnection, useWallet } from "@kyra/solana/hooks";
-import { Intent, Button, ProgressBar, Tag } from "@blueprintjs/core";
+import { useConnection, useWallet } from "@kyra/solana/src/hooks";
+import { createUniverse } from "@kyra/metablocks/src/api";
+import { Callout, Intent, Button, ProgressBar, Tag } from "@blueprintjs/core";
 
 import { useAtom, useResource } from "@kyra/hooks";
 import { scale } from "@kyra/utils/number";
@@ -115,6 +116,12 @@ function MetadataCardContent({ data }) {
           </Tag>
         ))}
       </div>
+      <Button
+        text="Deposit to Tara Universe"
+        className="mt-4"
+        fill
+        intent={Intent.PRIMARY}
+      />
     </div>
   );
 }
@@ -127,7 +134,7 @@ const MetadataCard = ({ metadata }) => {
   const { name, uri } = metadata.data.data;
   const { data, error, isLoading } = useResource(uri);
   return (
-    <div className="overflow-hidden relative bg-white shadow-lg ring-1 ring-black/5 rounded-xl flex items-center gap-6">
+    <div className="mb-4 overflow-hidden relative bg-white shadow-lg ring-1 ring-black/5 rounded-xl flex items-center gap-6">
       {!isLoading && !error && (
         <img
           className="absolute -left-6 w-24 h-24 rounded-full shadow-lg"
@@ -135,9 +142,9 @@ const MetadataCard = ({ metadata }) => {
         />
       )}
 
-      <div class="flex flex-col py-5 pr-4 pl-24">
-        <strong class="text-slate-900 text-sm font-medium">{name}</strong>
-        <span class="text-slate-500 text-sm font-medium">
+      <div className="flex flex-col py-5 pr-4 pl-24">
+        <strong className="text-slate-900 text-sm font-medium">{name}</strong>
+        <span className="text-slate-500 text-sm font-medium">
           {!isLoading && <MetadataCardContent data={data} />}
           {isLoading && <MetadataCardLoading />}
         </span>
@@ -148,7 +155,9 @@ const MetadataCard = ({ metadata }) => {
 
 const MetadataList = ({ metadataFromMint }) => {
   return (
-    <div className="mt-8 grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="w-1/4">
+      <Callout title="NFTs in your wallet" className="mb-4" icon="box" />
+
       {Object.keys(metadataFromMint).map((mint) => {
         return <MetadataCard key={mint} metadata={metadataFromMint[mint]} />;
       })}
@@ -206,3 +215,30 @@ const ViewNfts = () => {
 };
 
 export default ViewNfts;
+
+/* const CU = () => {
+ *   const wallet = useWallet();
+ *   const { connection } = useConnection();
+ *
+ *   useEffect(async () => {
+ *     try {
+ *       const params = {
+ *         connection,
+ *         wallet,
+ *         name: "un",
+ *         description: "udesc",
+ *         websiteUrl: "weburl",
+ *       };
+ *       console.log(params);
+ *       const tx = await createUniverse(params);
+ *       window.tx = tx;
+ *       console.log(tx);
+ *     } catch (e) {
+ *       console.error(e);
+ *     }
+ *   }, []);
+ *
+ *   return <div>1</div>;
+ * };
+ *
+ * export default CU; */

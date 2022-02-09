@@ -20,7 +20,7 @@ import { useRouter } from "next/router";
 import { networks } from "~/config";
 import { retractMiddle } from "@kyra/utils/string";
 import { useAtom } from "@kyra/hooks";
-import { useWallet, useWalletModal } from "@kyra/solana/hooks";
+import { useWallet, useWalletModal } from "@kyra/solana/src/hooks";
 import networkState, { switchNetwork } from "~/domain/network";
 
 function SolanaConnectButton() {
