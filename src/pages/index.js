@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { api } from "@kyraa/metablocks";
 import { hooks } from "@kyraa/solana";
 import { Callout, Intent, Button, ProgressBar, Tag } from "@blueprintjs/core";
-import { number } from "@kyraa/utils";
 
+import { scale } from "~/utils/number";
 import { useAtom, useResource } from "~/hooks";
 
 import tokenState, {
@@ -50,7 +50,7 @@ const computeLoadingState = ({
     const completePercentage = fetched / totalMetadataToFetch;
     return {
       message: `Fetching metadata for ${positiveBalanceProgramAccounts.length} tokens`,
-      progress: number.scale(completePercentage, 0, 1, 20, 70),
+      progress: scale(completePercentage, 0, 1, 20, 70),
     };
   }
 

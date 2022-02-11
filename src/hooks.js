@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import useSWR from "swr";
 
-import { string } from "@kyraa/utils";
+import { random } from "~/utils/string";
 
 // observe defAtom state changes
 const useAtom = (atom) => {
-  const id = string.random();
+  const id = random();
   const [state, setState] = useState(atom.deref());
 
   useEffect(() => {

@@ -18,7 +18,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 
 import { networks } from "~/config";
-import { string } from "@kyraa/utils";
+import { retractMiddle } from "~/utils/string";
 import { useAtom } from "~/hooks";
 import { hooks } from "@kyraa/solana";
 import networkState, { switchNetwork } from "~/domain/network";
@@ -56,7 +56,7 @@ function ConnectedButton({}) {
         minimal={true}
         intent={Intent.PRIMARY}
         rightIcon="caret-down"
-        text={publicKey && string.retractMiddle(publicKey.toString(), 6)}
+        text={publicKey && retractMiddle(publicKey.toString(), 6)}
       />
     </Popover2>
   );
