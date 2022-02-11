@@ -223,9 +223,10 @@
     "@json-rpc-tools/types" "^1.7.6"
     "@pedrouid/environment" "^1.0.1"
 
-"@kyraa/metablocks@link:../kyraa/packages/metablocks":
-  version "0.0.0"
-  uid ""
+"@kyraa/metablocks@^0.0.4":
+  version "0.0.4"
+  resolved "https://registry.yarnpkg.com/@kyraa/metablocks/-/metablocks-0.0.4.tgz#39dde3121ff46eac803148e4280442a44f1344a2"
+  integrity sha512-45uL4DEKe2j/nfu7Q8YAWTBe8ucnfzsxjOfHn90FaCMhegO8xMiRosSvgdcvPLBKADbuW8AcM3cR6I+Vgb/OBw==
 
 "@kyraa/solana@^0.0.9":
   version "0.0.9"
@@ -238,13 +239,18 @@
     "@solana/wallet-adapter-wallets" "^0.14.2"
     "@solana/web3.js" "^1.31.0"
 
-"@kyraa/tailwind@link:../kyraa/packages/tailwind":
-  version "0.0.0"
-  uid ""
+"@kyraa/tailwind@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@kyraa/tailwind/-/tailwind-1.0.0.tgz#c1fd19c96dfc77d9afd1d060a83af19bab0f8f16"
+  integrity sha512-DJ2jfZdjzfuNcKSC8/3Y5toQQNGssjat+iMtpOWcmHnjQG5qjy1ldF1gwQik6mntD9fmF98vU7by5s/uRZsECg==
 
-"@kyraa/utils@link:../kyraa/packages/utils":
-  version "0.0.0"
-  uid ""
+"@kyraa/utils@^1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@kyraa/utils/-/utils-1.0.1.tgz#27743a606314e52c199a754744faad87ba73c85c"
+  integrity sha512-f8rVTY5B4AD8T7Dj1Fj9JLuFS1Gwp/O+KaeP9NaeBQ2kUx2v4bJRb7EPjmKeyJFV21GbhYmoWJzejMaHgKSZ8A==
+  dependencies:
+    "@swc/cli" "^0.1.55"
+    "@swc/core" "^1.2.138"
 
 "@ledgerhq/devices@^6.20.0":
   version "6.20.0"
