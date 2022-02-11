@@ -1,1 +1,1 @@
-module.exports = require("./@kyra/tailwind/tailwind.config")
+module.exports = require("@kyraa/tailwind/tailwind.config");

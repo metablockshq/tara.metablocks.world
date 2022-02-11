@@ -3,11 +3,15 @@ import "~/styles/tailwind.css";
 import "~/styles/blueprint.css";
 import "~/styles/app.css";
 
-import { SolanaProvider } from "@kyra/solana/src/provider";
+import React, { useMemo } from "react";
 import { SWRConfig } from "swr";
 import Nav from "~/components/Nav";
 import networkState from "~/domain/network";
-import { useAtom } from "@kyra/hooks";
+import { useAtom } from "~/hooks";
+import { provider } from "@kyraa/solana";
+import { clusterApiUrl } from "@solana/web3.js";
+
+const { SolanaProvider } = provider;
 
 function App({ Component, pageProps }) {
   const { selectedNetworkId: network } = useAtom(networkState);

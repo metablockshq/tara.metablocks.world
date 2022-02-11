@@ -1,62 +1,11 @@
 import { PublicKey, SystemProgram, SYSVAR_RENT_PUBKEY } from "@solana/web3.js";
 import { defAtom } from "@thi.ng/atom";
 import useSWR from "swr";
+import { api } from "@kyraa/metablocks";
+
 import { programIds } from "../config";
-import {
-  findAssociatedAddressForKey,
-  findUniverseAddress,
-  findUserNftAddress,
-  findVaultAddress,
-  getMetaBlocksProgram,
-} from "../utils/solana";
 
 const state = defAtom({});
-
-const createUniverse = async (wallet, name, description, websiteUrl) => {
-  const program = getMetaBlocksProgram(wallet);
-  try {
-    state.swap((current) => ({
-      ...current,
-      creatingUniverse: true,
-      createUniverseError: null,
-    }));
-
-    const [universeKey, bump] = await findUniverseAddress(wallet.publicKey);
-
-    const tx = await program.rpc.createUniverse(
-      bump,
-      name,
-      description,
-      websiteUrl,
-      {
-        accounts: {
-          universe: universeKey,
-          payer: wallet.publicKey,
-          universeAuthority: wallet.publicKey,
-          systemProgram: SystemProgram.programId,
-        },
-        signers: [],
-      }
-    );
-
-    const universeData = await program.account.universe.fetch(universeKey);
-    state.swap((current) => ({
-      ...current,
-      createdUniverseData: universeData,
-    }));
-  } catch (error) {
-    console.log(error);
-    state.swap((current) => ({
-      ...current,
-      createUniverseError: error,
-    }));
-  } finally {
-    state.swap((current) => ({
-      ...current,
-      creatingUniverse: false,
-    }));
-  }
-};
 
 // TODO: convert this to useResource hook
 const useUniverses = (network) => {
@@ -72,39 +21,45 @@ const universeByPublicKey = (universes, publicKey) => {
   return universes.find((u) => u.publicKey === publicKey);
 };
 
-const depositNft = async (wallet, metadata) => {
-  // TODO: deposit one at a time?
-  state.resetIn("depositingNft", true);
-
-  const { mint } = metadata.data;
-  const mintKey = new PublicKey(mint);
-
-  // const universeKey = account of the universe in question
-  const universeKey = new PublicKey(
-    "6oupeGxPUSRL6V7cHejqoco2w49ZBHaq4pzVthCiyYkq"
+const getUserNfts = async ({ wallet, connection, filter }) => {
+  const res = await api.getUserNfts(
+    { wallet, connection },
+    {
+      universes: [], // Any universe address
+      vaultAuthorities: [],
+      authorities: [],
+    }
   );
+};
 
-  const { userNftBump, vaultBump, vaultAssociatedBump, depositAccounts } =
-    await computeMetaBlocksDepositParams(
-      wallet.publicKey,
-      mintKey,
-      universeKey
-    );
+const depositNft = async ({ wallet, connection, metadata }) => {
+  const taraUniverseKey = new PublicKey(
+    "56AfWAaYWxKwLY4HbaanCjre6K8zvtLYy5v2465Wy3dd"
+  );
+  const mintKey = new PublicKey(metadata?.data?.mint);
+  const url = metadata?.data?.data?.uri; // arweave URL
+  const isReceiptMasterEdition = false; // users should not be able to create copies of receipt
 
-  const program = getMetaBlocksProgram(wallet);
-
+  console.log({
+    wallet,
+    connection,
+    mintKey,
+    url,
+    isReceiptMasterEdition,
+    universeKey: taraUniverseKey,
+  });
   try {
-    const tx = await program.rpc.depositNft(
-      userNftBump,
-      vaultBump,
-      vaultAssociatedBump,
-      {
-        accounts: depositAccounts,
-        signers: [wallet.payer],
-      }
-    );
+    state.resetIn("depositingNft", true);
+    const res = await api.depositNft({
+      wallet,
+      connection,
+      mintKey,
+      url,
+      isReceiptMasterEdition,
+      universeKey: taraUniverseKey,
+    });
 
-    console.log(tx);
+    console.log("---> deposit res", res);
   } catch (err) {
     console.log("depositNftError", err);
   } finally {
@@ -114,9 +69,9 @@ const depositNft = async (wallet, metadata) => {
 
 export default state;
 export {
-  createUniverse,
   depositNft,
   useUniverses,
   useLastCrawledTime,
   universeByPublicKey,
+  getUserNfts,
 };

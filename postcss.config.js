@@ -1,1 +1,1 @@
-module.exports = require("./@kyra/tailwind/postcss.config")
+module.exports = require("@kyraa/tailwind/postcss.config");

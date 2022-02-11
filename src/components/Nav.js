@@ -18,10 +18,12 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 
 import { networks } from "~/config";
-import { retractMiddle } from "@kyra/utils/string";
-import { useAtom } from "@kyra/hooks";
-import { useWallet, useWalletModal } from "@kyra/solana/src/hooks";
+import { string } from "@kyraa/utils";
+import { useAtom } from "~/hooks";
+import { hooks } from "@kyraa/solana";
 import networkState, { switchNetwork } from "~/domain/network";
+
+const { useWallet, useWalletModal } = hooks;
 
 function SolanaConnectButton() {
   const { wallet, publicKey, connect, connected, connecting } = useWallet();
@@ -54,7 +56,7 @@ function ConnectedButton({}) {
         minimal={true}
         intent={Intent.PRIMARY}
         rightIcon="caret-down"
-        text={publicKey && retractMiddle(publicKey.toString(), 6)}
+        text={publicKey && string.retractMiddle(publicKey.toString(), 6)}
       />
     </Popover2>
   );

@@ -1,16 +1,20 @@
 import { useEffect, useState } from "react";
-import { useConnection, useWallet } from "@kyra/solana/src/hooks";
-import { createUniverse } from "@kyra/metablocks/src/api";
+import { api } from "@kyraa/metablocks";
+import { hooks } from "@kyraa/solana";
 import { Callout, Intent, Button, ProgressBar, Tag } from "@blueprintjs/core";
+import { number } from "@kyraa/utils";
 
-import { useAtom, useResource } from "@kyra/hooks";
-import { scale } from "@kyra/utils/number";
+import { useAtom, useResource } from "~/hooks";
 
 import tokenState, {
   getMetadataFromMint,
   getParsedProgramAccounts,
   filterEmptyProgramAccounts,
 } from "~/domain/token";
+
+import universeState, { depositNft, getUserNfts } from "~/domain/universe";
+
+const { useConnection, useWallet } = hooks;
 
 const computeLoadingState = ({
   positiveBalanceProgramAccounts,
@@ -46,7 +50,7 @@ const computeLoadingState = ({
     const completePercentage = fetched / totalMetadataToFetch;
     return {
       message: `Fetching metadata for ${positiveBalanceProgramAccounts.length} tokens`,
-      progress: scale(completePercentage, 0, 1, 20, 70),
+      progress: number.scale(completePercentage, 0, 1, 20, 70),
     };
   }
 
@@ -96,7 +100,9 @@ const Progress = ({ positiveBalanceProgramAccounts }) => {
   );
 };
 
-function MetadataCardContent({ data }) {
+function MetadataCardContent({ data, metadata }) {
+  const wallet = useWallet();
+  const { connection } = useConnection();
   return (
     <div className="">
       <p className="text-gray-600">{data.description}</p>
@@ -119,6 +125,9 @@ function MetadataCardContent({ data }) {
       <Button
         text="Deposit to Tara Universe"
         className="mt-4"
+        onClick={() => {
+          depositNft({ wallet, connection, metadata });
+        }}
         fill
         intent={Intent.PRIMARY}
       />
@@ -145,7 +154,9 @@ const MetadataCard = ({ metadata }) => {
       <div className="flex flex-col py-5 pr-4 pl-24">
         <strong className="text-slate-900 text-sm font-medium">{name}</strong>
         <span className="text-slate-500 text-sm font-medium">
-          {!isLoading && <MetadataCardContent data={data} />}
+          {!isLoading && (
+            <MetadataCardContent data={data} metadata={metadata} />
+          )}
           {isLoading && <MetadataCardLoading />}
         </span>
       </div>
@@ -182,6 +193,8 @@ const ViewNfts = () => {
   useEffect(() => {
     if (wallet && wallet.publicKey)
       getParsedProgramAccounts(connection, wallet);
+
+    if (wallet && wallet.publicKey) getUserNfts({ wallet, connection });
   }, [wallet]);
 
   useEffect(() => {
@@ -215,30 +228,3 @@ const ViewNfts = () => {
 };
 
 export default ViewNfts;
-
-/* const CU = () => {
- *   const wallet = useWallet();
- *   const { connection } = useConnection();
- *
- *   useEffect(async () => {
- *     try {
- *       const params = {
- *         connection,
- *         wallet,
- *         name: "un",
- *         description: "udesc",
- *         websiteUrl: "weburl",
- *       };
- *       console.log(params);
- *       const tx = await createUniverse(params);
- *       window.tx = tx;
- *       console.log(tx);
- *     } catch (e) {
- *       console.error(e);
- *     }
- *   }, []);
- *
- *   return <div>1</div>;
- * };
- *
- * export default CU; */
