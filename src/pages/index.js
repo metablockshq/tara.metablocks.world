@@ -4,6 +4,7 @@ import { hooks } from "@kyraa/solana";
 import { Callout, Intent, Button, ProgressBar, Tag } from "@blueprintjs/core";
 
 import { scale } from "~/utils/number";
+import { isValidHttpUrl } from "~/utils/string";
 import { useAtom, useResource } from "~/hooks";
 
 import tokenState, {
@@ -12,7 +13,11 @@ import tokenState, {
   filterEmptyProgramAccounts,
 } from "~/domain/token";
 
-import universeState, { depositNft, getUserNfts } from "~/domain/universe";
+import universeState, {
+  depositNft,
+  getUserNfts,
+  withdrawNft,
+} from "~/domain/universe";
 
 const { useConnection, useWallet } = hooks;
 
@@ -126,7 +131,8 @@ function MetadataCardContent({ data, metadata }) {
         text="Deposit to Tara Universe"
         className="mt-4"
         onClick={() => {
-          depositNft({ wallet, connection, metadata });
+          withdrawNft({ wallet, connection, metadata });
+          // depositNft({ wallet, connection, metadata });
         }}
         fill
         intent={Intent.PRIMARY}
@@ -141,37 +147,55 @@ function MetadataCardLoading() {
 
 const MetadataCard = ({ metadata }) => {
   const { name, uri } = metadata.data.data;
-  const { data, error, isLoading } = useResource(uri);
-  return (
-    <div className="mb-4 overflow-hidden relative bg-white shadow-lg ring-1 ring-black/5 rounded-xl flex items-center gap-6">
-      {!isLoading && !error && (
-        <img
-          className="absolute -left-6 w-24 h-24 rounded-full shadow-lg"
-          src={data.image}
-        />
-      )}
+  if (isValidHttpUrl(uri)) {
+    const { data, error, isLoading } = useResource(uri);
 
-      <div className="flex flex-col py-5 pr-4 pl-24">
-        <strong className="text-slate-900 text-sm font-medium">{name}</strong>
-        <span className="text-slate-500 text-sm font-medium">
-          {!isLoading && (
-            <MetadataCardContent data={data} metadata={metadata} />
-          )}
-          {isLoading && <MetadataCardLoading />}
-        </span>
+    return (
+      <div className="mb-4 overflow-hidden relative bg-white shadow-lg ring-1 ring-black/5 rounded-xl flex items-center gap-6">
+        {!isLoading && !error && (
+          <img
+            className="absolute -left-6 w-24 h-24 rounded-full shadow-lg"
+            src={data.image}
+          />
+        )}
+
+        <div className="flex flex-col py-5 pr-4 pl-24">
+          <strong className="text-slate-900 text-sm font-medium">{name}</strong>
+          <span className="text-slate-500 text-sm font-medium">
+            {!isLoading && data && (
+              <MetadataCardContent data={data} metadata={metadata} />
+            )}
+            {isLoading && <MetadataCardLoading />}
+          </span>
+        </div>
       </div>
-    </div>
-  );
+    );
+  } else {
+    return <div>Invalid URI</div>;
+  }
 };
 
-const MetadataList = ({ metadataFromMint }) => {
+const MetadataList = ({ title, metadataFromMint }) => {
   return (
-    <div className="w-1/4">
-      <Callout title="NFTs in your wallet" className="mb-4" icon="box" />
+    <div className="pr-2">
+      <Callout title={title} className="mb-4" icon="box" />
 
       {Object.keys(metadataFromMint).map((mint) => {
         return <MetadataCard key={mint} metadata={metadataFromMint[mint]} />;
       })}
+    </div>
+  );
+};
+
+const MetaNft = ({}) => {
+  return (
+    <div className="pr-2">
+      <Callout
+        title={"Meta Nft"}
+        className="mb-4"
+        icon="inner-join"
+        intent={Intent.PRIMARY}
+      />
     </div>
   );
 };
@@ -220,11 +244,44 @@ const ViewNfts = () => {
       )}
       {!isLoading && (
         <div>
-          <MetadataList metadataFromMint={metadataFromMint} />
+          <MetadataList
+            title="NFTs in your wallet"
+            metadataFromMint={metadataFromMint}
+          />
         </div>
       )}
     </div>
   );
 };
 
-export default ViewNfts;
+const ViewNftsInUniverse = () => {
+  const wallet = useWallet();
+  const { connection } = useConnection();
+
+  useEffect(() => {
+    console.log(wallet);
+  }, [wallet]);
+
+  return <MetadataList title="Deposited in Universe" metadataFromMint={{}} />;
+};
+
+const Page = () => {
+  const wallet = useWallet();
+  const { connection } = useConnection();
+  return (
+    <div className="flex">
+      <div className="w-1/4">
+        <ViewNfts />
+      </div>
+      <div className="w-1/4">
+        <ViewNftsInUniverse />
+      </div>
+
+      <div className="w-2/4">
+        <MetaNft />
+      </div>
+    </div>
+  );
+};
+
+export default Page;

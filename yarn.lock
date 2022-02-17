@@ -223,10 +223,9 @@
     "@json-rpc-tools/types" "^1.7.6"
     "@pedrouid/environment" "^1.0.1"
 
-"@kyraa/metablocks@^0.0.4":
-  version "0.0.4"
-  resolved "https://registry.yarnpkg.com/@kyraa/metablocks/-/metablocks-0.0.4.tgz#39dde3121ff46eac803148e4280442a44f1344a2"
-  integrity sha512-45uL4DEKe2j/nfu7Q8YAWTBe8ucnfzsxjOfHn90FaCMhegO8xMiRosSvgdcvPLBKADbuW8AcM3cR6I+Vgb/OBw==
+"@kyraa/metablocks@link:../kyraa/packages/metablocks":
+  version "0.0.0"
+  uid ""
 
 "@kyraa/solana@^0.0.9":
   version "0.0.9"
