@@ -41,3 +41,15 @@ export const queryStringToObj = (queryString) =>
   }, {});
 
 export const slugify = (s) => s.toLowerCase().replace(/ /g, "-");
+
+export const isValidHttpUrl = (string) => {
+  let url;
+
+  try {
+    url = new URL(string);
+  } catch (_) {
+    return false;
+  }
+
+  return url.protocol === "http:" || url.protocol === "https:";
+};

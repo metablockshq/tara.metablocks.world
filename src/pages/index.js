@@ -4,6 +4,7 @@ import { hooks } from "@kyraa/solana";
 import { Callout, Intent, Button, ProgressBar, Tag } from "@blueprintjs/core";
 
 import { scale } from "~/utils/number";
+import { isValidHttpUrl } from "~/utils/string";
 import { useAtom, useResource } from "~/hooks";
 
 import tokenState, {
@@ -12,7 +13,12 @@ import tokenState, {
   filterEmptyProgramAccounts,
 } from "~/domain/token";
 
-import universeState, { depositNft, getUserNfts } from "~/domain/universe";
+import universeState, {
+  depositNft,
+  getUserNfts,
+  withdrawNft,
+  fetchDepositedNfts,
+} from "~/domain/universe";
 
 const { useConnection, useWallet } = hooks;
 
@@ -100,7 +106,8 @@ const Progress = ({ positiveBalanceProgramAccounts }) => {
   );
 };
 
-function MetadataCardContent({ data, metadata }) {
+function MetadataCardContent({ data, metadata, isDeposited }) {
+  console.log(metadata);
   const wallet = useWallet();
   const { connection } = useConnection();
   return (
@@ -123,13 +130,20 @@ function MetadataCardContent({ data, metadata }) {
         ))}
       </div>
       <Button
-        text="Deposit to Tara Universe"
+        text={
+          isDeposited ? "Withdraw from universe" : "Deposit to Tara Universe"
+        }
         className="mt-4"
         onClick={() => {
-          depositNft({ wallet, connection, metadata });
+          (isDeposited ? withdrawNft : depositNft)({
+            wallet,
+            connection,
+            metadata,
+          });
+          // depositNft({ wallet, connection, metadata });
         }}
         fill
-        intent={Intent.PRIMARY}
+        intent={isDeposited ? "" : Intent.PRIMARY}
       />
     </div>
   );
@@ -141,37 +155,95 @@ function MetadataCardLoading() {
 
 const MetadataCard = ({ metadata }) => {
   const { name, uri } = metadata.data.data;
-  const { data, error, isLoading } = useResource(uri);
-  return (
-    <div className="mb-4 overflow-hidden relative bg-white shadow-lg ring-1 ring-black/5 rounded-xl flex items-center gap-6">
-      {!isLoading && !error && (
-        <img
-          className="absolute -left-6 w-24 h-24 rounded-full shadow-lg"
-          src={data.image}
-        />
-      )}
+  if (isValidHttpUrl(uri)) {
+    const { data, error, isLoading } = useResource(uri);
 
-      <div className="flex flex-col py-5 pr-4 pl-24">
-        <strong className="text-slate-900 text-sm font-medium">{name}</strong>
-        <span className="text-slate-500 text-sm font-medium">
-          {!isLoading && (
-            <MetadataCardContent data={data} metadata={metadata} />
-          )}
-          {isLoading && <MetadataCardLoading />}
-        </span>
+    return (
+      <div className="mb-4 overflow-hidden relative bg-white shadow-lg ring-1 ring-black/5 rounded-xl flex items-center gap-6">
+        {!isLoading && !error && (
+          <img
+            className="absolute -left-6 w-24 h-24 rounded-full shadow-lg"
+            src={data.image}
+          />
+        )}
+
+        <div className="flex flex-col py-5 pr-4 pl-24">
+          <strong className="text-slate-900 text-sm font-medium">{name}</strong>
+          <span className="text-slate-500 text-sm font-medium">
+            {!isLoading && data && (
+              <MetadataCardContent data={data} metadata={metadata} />
+            )}
+            {isLoading && <MetadataCardLoading />}
+          </span>
+        </div>
       </div>
-    </div>
-  );
+    );
+  } else {
+    return <div>Invalid URI</div>;
+  }
 };
 
-const MetadataList = ({ metadataFromMint }) => {
+const MetadataList = ({ title, metadataFromMint }) => {
   return (
-    <div className="w-1/4">
-      <Callout title="NFTs in your wallet" className="mb-4" icon="box" />
+    <div className="pr-2">
+      <Callout title={title} className="mb-4" icon="box" />
 
       {Object.keys(metadataFromMint).map((mint) => {
         return <MetadataCard key={mint} metadata={metadataFromMint[mint]} />;
       })}
+    </div>
+  );
+};
+
+const MetaNftLayer = ({ metadata }) => {
+  const { name, uri } = metadata.data.data;
+  if (isValidHttpUrl(uri)) {
+    const { data, error, isLoading } = useResource(uri);
+
+    return (
+      <div className="absolute">
+        {!isLoading && !error && <img src={data.image} />}
+      </div>
+    );
+  } else {
+    return <div>Invalid URI</div>;
+  }
+};
+
+const MetaNft = ({}) => {
+  const wallet = useWallet();
+  const { connection } = useConnection();
+  const {
+    gettingParsedProgramAccounts,
+    parsedProgramAccounts,
+    gettingMetadataFromMint,
+    metadataFromMint,
+  } = useAtom(tokenState);
+
+  const { depositedNfts } = useAtom(universeState);
+
+  // depositedNfts.token_mint should not be equal to key of metadataFromMint
+  const depositedNftTokenMints = depositedNfts.map((d) => d.token_mint);
+  const receiptMints = Object.fromEntries(
+    Object.entries(metadataFromMint).filter(
+      ([key, value]) => !depositedNftTokenMints.includes(key)
+    )
+  );
+
+  return (
+    <div className="pr-2 flex flex-col">
+      <Callout
+        title={"Meta Nft"}
+        className="mb-4"
+        icon="inner-join"
+        intent={Intent.PRIMARY}
+      ></Callout>
+
+      <div className="relative">
+        {Object.keys(receiptMints).map((k) => {
+          return <MetaNftLayer key={k} metadata={receiptMints[k]} />;
+        })}
+      </div>
     </div>
   );
 };
@@ -189,6 +261,16 @@ const ViewNfts = () => {
     gettingMetadataFromMint,
     metadataFromMint,
   } = useAtom(tokenState);
+
+  const { depositedNfts } = useAtom(universeState);
+
+  // depositedNfts.token_mint should not be equal to key of metadataFromMint
+  const depositedNftTokenMints = depositedNfts.map((d) => d.token_mint);
+  const nonReceiptMetadata = Object.fromEntries(
+    Object.entries(metadataFromMint).filter(([key, value]) =>
+      depositedNftTokenMints.includes(key)
+    )
+  );
 
   useEffect(() => {
     if (wallet && wallet.publicKey)
@@ -220,11 +302,68 @@ const ViewNfts = () => {
       )}
       {!isLoading && (
         <div>
-          <MetadataList metadataFromMint={metadataFromMint} />
+          <MetadataList
+            title="NFTs in your wallet"
+            metadataFromMint={nonReceiptMetadata}
+          />
         </div>
       )}
     </div>
   );
 };
 
-export default ViewNfts;
+const ViewNftsInUniverse = () => {
+  const wallet = useWallet();
+  const { connection } = useConnection();
+  const {
+    gettingParsedProgramAccounts,
+    parsedProgramAccounts,
+    gettingMetadataFromMint,
+    metadataFromMint,
+  } = useAtom(tokenState);
+
+  const { depositedNfts } = useAtom(universeState);
+
+  // depositedNfts.token_mint should not be equal to key of metadataFromMint
+  const depositedNftTokenMints = depositedNfts.map((d) => d.token_mint);
+  const receiptMints = Object.fromEntries(
+    Object.entries(metadataFromMint).filter(
+      ([key, value]) => !depositedNftTokenMints.includes(key)
+    )
+  );
+
+  return (
+    <MetadataList
+      title="Deposited in Universe"
+      metadataFromMint={receiptMints}
+    />
+  );
+};
+
+const Page = () => {
+  const wallet = useWallet();
+  const { connection } = useConnection();
+  const [depositedNfts, setDepositedNfts] = useState([]);
+
+  useEffect(async () => {
+    if (wallet) {
+      fetchDepositedNfts({ wallet, connection });
+    }
+  }, [wallet, connection]);
+  return (
+    <div className="flex">
+      <div className="w-2/5">
+        <ViewNfts />
+      </div>
+      <div className="w-2/5">
+        <ViewNftsInUniverse />
+      </div>
+
+      <div className="w-1/5">
+        <MetaNft />
+      </div>
+    </div>
+  );
+};
+
+export default Page;
