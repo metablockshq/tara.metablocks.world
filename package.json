@@ -26,6 +26,7 @@
     "@kyraa/tailwind": "^1.0.0",
     "@metaplex-foundation/mpl-token-metadata": "^1.1.0",
     "@project-serum/anchor": "^0.20.1",
+    "@project-serum/borsh": "^0.2.5",
     "@solana/wallet-adapter-base": "^0.9.2",
     "@solana/wallet-adapter-react": "^0.15.2",
     "@solana/wallet-adapter-react-ui": "^0.9.4",
