@@ -106,10 +106,11 @@ const Progress = ({ positiveBalanceProgramAccounts }) => {
   );
 };
 
-function MetadataCardContent({ data, metadata, isDeposited }) {
-  console.log(metadata);
+function MetadataCardContent({ data, metadata }) {
+  const isDeposited = metadata.data.data.name === "MetablocksReceiptNft";
   const wallet = useWallet();
   const { connection } = useConnection();
+  const { depositingNft, withdrawingNft } = useAtom(universeState);
   return (
     <div className="">
       <p className="text-gray-600">{data.description}</p>
@@ -143,7 +144,8 @@ function MetadataCardContent({ data, metadata, isDeposited }) {
           // depositNft({ wallet, connection, metadata });
         }}
         fill
-        intent={isDeposited ? "" : Intent.PRIMARY}
+        loading={depositingNft || withdrawingNft}
+        intent={isDeposited ? null : Intent.PRIMARY}
       />
     </div>
   );
@@ -197,11 +199,16 @@ const MetadataList = ({ title, metadataFromMint }) => {
 
 const MetaNftLayer = ({ metadata }) => {
   const { name, uri } = metadata.data.data;
+
   if (isValidHttpUrl(uri)) {
     const { data, error, isLoading } = useResource(uri);
 
+    const zIndex = data?.attributes?.find(
+      (a) => a.trait_type === "zIndex"
+    ).value;
+
     return (
-      <div className="absolute">
+      <div className="absolute" style={{ zIndex }}>
         {!isLoading && !error && <img src={data.image} />}
       </div>
     );
@@ -211,22 +218,11 @@ const MetaNftLayer = ({ metadata }) => {
 };
 
 const MetaNft = ({}) => {
-  const wallet = useWallet();
-  const { connection } = useConnection();
-  const {
-    gettingParsedProgramAccounts,
-    parsedProgramAccounts,
-    gettingMetadataFromMint,
-    metadataFromMint,
-  } = useAtom(tokenState);
+  const { metadataFromMint } = useAtom(tokenState);
 
-  const { depositedNfts } = useAtom(universeState);
-
-  // depositedNfts.token_mint should not be equal to key of metadataFromMint
-  const depositedNftTokenMints = depositedNfts.map((d) => d.token_mint);
-  const receiptMints = Object.fromEntries(
+  const inContractMetadata = Object.fromEntries(
     Object.entries(metadataFromMint).filter(
-      ([key, value]) => !depositedNftTokenMints.includes(key)
+      ([key, value]) => value.data.data.name === "MetablocksReceiptNft"
     )
   );
 
@@ -240,8 +236,8 @@ const MetaNft = ({}) => {
       ></Callout>
 
       <div className="relative">
-        {Object.keys(receiptMints).map((k) => {
-          return <MetaNftLayer key={k} metadata={receiptMints[k]} />;
+        {Object.keys(inContractMetadata).map((k) => {
+          return <MetaNftLayer key={k} metadata={inContractMetadata[k]} />;
         })}
       </div>
     </div>
@@ -262,13 +258,9 @@ const ViewNfts = () => {
     metadataFromMint,
   } = useAtom(tokenState);
 
-  const { depositedNfts } = useAtom(universeState);
-
-  // depositedNfts.token_mint should not be equal to key of metadataFromMint
-  const depositedNftTokenMints = depositedNfts.map((d) => d.token_mint);
-  const nonReceiptMetadata = Object.fromEntries(
-    Object.entries(metadataFromMint).filter(([key, value]) =>
-      depositedNftTokenMints.includes(key)
+  const inWalletMetadata = Object.fromEntries(
+    Object.entries(metadataFromMint).filter(
+      ([key, value]) => value.data.data.name !== "MetablocksReceiptNft"
     )
   );
 
@@ -304,7 +296,7 @@ const ViewNfts = () => {
         <div>
           <MetadataList
             title="NFTs in your wallet"
-            metadataFromMint={nonReceiptMetadata}
+            metadataFromMint={inWalletMetadata}
           />
         </div>
       )}
@@ -313,29 +305,18 @@ const ViewNfts = () => {
 };
 
 const ViewNftsInUniverse = () => {
-  const wallet = useWallet();
-  const { connection } = useConnection();
-  const {
-    gettingParsedProgramAccounts,
-    parsedProgramAccounts,
-    gettingMetadataFromMint,
-    metadataFromMint,
-  } = useAtom(tokenState);
+  const { metadataFromMint } = useAtom(tokenState);
 
-  const { depositedNfts } = useAtom(universeState);
-
-  // depositedNfts.token_mint should not be equal to key of metadataFromMint
-  const depositedNftTokenMints = depositedNfts.map((d) => d.token_mint);
-  const receiptMints = Object.fromEntries(
+  const inContractMetadata = Object.fromEntries(
     Object.entries(metadataFromMint).filter(
-      ([key, value]) => !depositedNftTokenMints.includes(key)
+      ([key, value]) => value.data.data.name === "MetablocksReceiptNft"
     )
   );
 
   return (
     <MetadataList
       title="Deposited in Universe"
-      metadataFromMint={receiptMints}
+      metadataFromMint={inContractMetadata}
     />
   );
 };
@@ -343,13 +324,7 @@ const ViewNftsInUniverse = () => {
 const Page = () => {
   const wallet = useWallet();
   const { connection } = useConnection();
-  const [depositedNfts, setDepositedNfts] = useState([]);
 
-  useEffect(async () => {
-    if (wallet) {
-      fetchDepositedNfts({ wallet, connection });
-    }
-  }, [wallet, connection]);
   return (
     <div className="flex">
       <div className="w-2/5">
