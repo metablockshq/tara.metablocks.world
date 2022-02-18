@@ -5,7 +5,7 @@ import { api } from "@kyraa/metablocks";
 
 import { programIds } from "../config";
 
-const state = defAtom({});
+const state = defAtom({ depositedNfts: [] });
 
 // TODO: convert this to useResource hook
 const useUniverses = (network) => {
@@ -21,21 +21,23 @@ const universeByPublicKey = (universes, publicKey) => {
   return universes.find((u) => u.publicKey === publicKey);
 };
 
-const getUserNfts = async ({ wallet, connection, filter }) => {
-  /* const res = await api.getUserNfts(
-   *   { wallet, connection },
-   *   {
-   *     universes: [], // Any universe address
-   *     vaultAuthorities: [],
-   *     authorities: [],
-   *   }
-   * ); */
-  return undefined;
-};
-
 const taraUniverseKey = new PublicKey(
   "56AfWAaYWxKwLY4HbaanCjre6K8zvtLYy5v2465Wy3dd"
 );
+
+const getUserNfts = async ({ wallet, connection, filter }) => {
+  const res = await api.getWrappedUserNftAccounts(
+    { wallet, connection },
+    {
+      // universes: [taraUniverseKey.toString()], // Any universe address
+      universes: [], // Any universe address
+      vaultAuthorities: [],
+      // authorities: [wallet?.publicKey?.toString()],
+      authorities: [],
+    }
+  );
+  return res;
+};
 
 const depositNft = async ({ wallet, connection, metadata }) => {
   const mintKey = new PublicKey(metadata?.data?.mint);
@@ -65,18 +67,12 @@ const depositNft = async ({ wallet, connection, metadata }) => {
 const withdrawNft = async ({ wallet, connection, metadata }) => {
   const receiptMint = new PublicKey(metadata?.data?.mint);
 
-  const tokenMint = new PublicKey(
-    "8Q3izc7Qme5UoRAQqQ3cFg9rVfQHnzB4rUmYbdsWeDUR"
-  );
-
-  console.log(tokenMint);
-
   try {
     state.resetIn("withdrawingNft", true);
-    const res = await api.withdrawNft({
+    const res = await api.withdrawNftWithReceipt({
       wallet,
       connection,
-      tokenMint,
+      receiptMint,
       universeKey: taraUniverseKey,
     });
 
@@ -89,6 +85,22 @@ const withdrawNft = async ({ wallet, connection, metadata }) => {
   }
 };
 
+const fetchDepositedNfts = async ({ wallet, connection }) => {
+  state.resetIn("fetchingDepositedNfts", true);
+  try {
+    const walletKeyStr = wallet?.publicKey?.toString();
+    const universeKeyStr = taraUniverseKey.toString();
+    const nfts = await getUserNfts({ wallet, connection, filter: {} });
+    const taraNftsOfConnectedWallet = nfts.filter(
+      (n) => n.universe === universeKeyStr && n.nft_authority === walletKeyStr
+    );
+    state.resetIn("depositedNfts", taraNftsOfConnectedWallet);
+  } catch (err) {
+  } finally {
+    state.resetIn("fetchingDepositedNfts", false);
+  }
+};
+
 export default state;
 export {
   depositNft,
@@ -97,4 +109,5 @@ export {
   useLastCrawledTime,
   universeByPublicKey,
   getUserNfts,
+  fetchDepositedNfts,
 };

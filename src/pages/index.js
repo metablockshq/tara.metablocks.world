@@ -17,6 +17,7 @@ import universeState, {
   depositNft,
   getUserNfts,
   withdrawNft,
+  fetchDepositedNfts,
 } from "~/domain/universe";
 
 const { useConnection, useWallet } = hooks;
@@ -105,7 +106,8 @@ const Progress = ({ positiveBalanceProgramAccounts }) => {
   );
 };
 
-function MetadataCardContent({ data, metadata }) {
+function MetadataCardContent({ data, metadata, isDeposited }) {
+  console.log(metadata);
   const wallet = useWallet();
   const { connection } = useConnection();
   return (
@@ -128,14 +130,20 @@ function MetadataCardContent({ data, metadata }) {
         ))}
       </div>
       <Button
-        text="Deposit to Tara Universe"
+        text={
+          isDeposited ? "Withdraw from universe" : "Deposit to Tara Universe"
+        }
         className="mt-4"
         onClick={() => {
-          withdrawNft({ wallet, connection, metadata });
+          (isDeposited ? withdrawNft : depositNft)({
+            wallet,
+            connection,
+            metadata,
+          });
           // depositNft({ wallet, connection, metadata });
         }}
         fill
-        intent={Intent.PRIMARY}
+        intent={isDeposited ? "" : Intent.PRIMARY}
       />
     </div>
   );
@@ -187,15 +195,55 @@ const MetadataList = ({ title, metadataFromMint }) => {
   );
 };
 
+const MetaNftLayer = ({ metadata }) => {
+  const { name, uri } = metadata.data.data;
+  if (isValidHttpUrl(uri)) {
+    const { data, error, isLoading } = useResource(uri);
+
+    return (
+      <div className="absolute">
+        {!isLoading && !error && <img src={data.image} />}
+      </div>
+    );
+  } else {
+    return <div>Invalid URI</div>;
+  }
+};
+
 const MetaNft = ({}) => {
+  const wallet = useWallet();
+  const { connection } = useConnection();
+  const {
+    gettingParsedProgramAccounts,
+    parsedProgramAccounts,
+    gettingMetadataFromMint,
+    metadataFromMint,
+  } = useAtom(tokenState);
+
+  const { depositedNfts } = useAtom(universeState);
+
+  // depositedNfts.token_mint should not be equal to key of metadataFromMint
+  const depositedNftTokenMints = depositedNfts.map((d) => d.token_mint);
+  const receiptMints = Object.fromEntries(
+    Object.entries(metadataFromMint).filter(
+      ([key, value]) => !depositedNftTokenMints.includes(key)
+    )
+  );
+
   return (
-    <div className="pr-2">
+    <div className="pr-2 flex flex-col">
       <Callout
         title={"Meta Nft"}
         className="mb-4"
         icon="inner-join"
         intent={Intent.PRIMARY}
-      />
+      ></Callout>
+
+      <div className="relative">
+        {Object.keys(receiptMints).map((k) => {
+          return <MetaNftLayer key={k} metadata={receiptMints[k]} />;
+        })}
+      </div>
     </div>
   );
 };
@@ -213,6 +261,16 @@ const ViewNfts = () => {
     gettingMetadataFromMint,
     metadataFromMint,
   } = useAtom(tokenState);
+
+  const { depositedNfts } = useAtom(universeState);
+
+  // depositedNfts.token_mint should not be equal to key of metadataFromMint
+  const depositedNftTokenMints = depositedNfts.map((d) => d.token_mint);
+  const nonReceiptMetadata = Object.fromEntries(
+    Object.entries(metadataFromMint).filter(([key, value]) =>
+      depositedNftTokenMints.includes(key)
+    )
+  );
 
   useEffect(() => {
     if (wallet && wallet.publicKey)
@@ -246,7 +304,7 @@ const ViewNfts = () => {
         <div>
           <MetadataList
             title="NFTs in your wallet"
-            metadataFromMint={metadataFromMint}
+            metadataFromMint={nonReceiptMetadata}
           />
         </div>
       )}
@@ -257,27 +315,51 @@ const ViewNfts = () => {
 const ViewNftsInUniverse = () => {
   const wallet = useWallet();
   const { connection } = useConnection();
+  const {
+    gettingParsedProgramAccounts,
+    parsedProgramAccounts,
+    gettingMetadataFromMint,
+    metadataFromMint,
+  } = useAtom(tokenState);
 
-  useEffect(() => {
-    console.log(wallet);
-  }, [wallet]);
+  const { depositedNfts } = useAtom(universeState);
 
-  return <MetadataList title="Deposited in Universe" metadataFromMint={{}} />;
+  // depositedNfts.token_mint should not be equal to key of metadataFromMint
+  const depositedNftTokenMints = depositedNfts.map((d) => d.token_mint);
+  const receiptMints = Object.fromEntries(
+    Object.entries(metadataFromMint).filter(
+      ([key, value]) => !depositedNftTokenMints.includes(key)
+    )
+  );
+
+  return (
+    <MetadataList
+      title="Deposited in Universe"
+      metadataFromMint={receiptMints}
+    />
+  );
 };
 
 const Page = () => {
   const wallet = useWallet();
   const { connection } = useConnection();
+  const [depositedNfts, setDepositedNfts] = useState([]);
+
+  useEffect(async () => {
+    if (wallet) {
+      fetchDepositedNfts({ wallet, connection });
+    }
+  }, [wallet, connection]);
   return (
     <div className="flex">
-      <div className="w-1/4">
+      <div className="w-2/5">
         <ViewNfts />
       </div>
-      <div className="w-1/4">
+      <div className="w-2/5">
         <ViewNftsInUniverse />
       </div>
 
-      <div className="w-2/4">
+      <div className="w-1/5">
         <MetaNft />
       </div>
     </div>
