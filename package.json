@@ -21,7 +21,7 @@
     "@blueprintjs/core": "^4.0.0-beta.12",
     "@blueprintjs/popover2": "^0.12.9",
     "@blueprintjs/select": "^3.18.11",
-    "@kyraa/metablocks": "link:../kyraa/packages/metablocks",
+    "@kyraa/metablocks": "0.0.5",
     "@kyraa/solana": "^0.0.9",
     "@kyraa/tailwind": "^1.0.0",
     "@metaplex-foundation/mpl-token-metadata": "^1.1.0",
