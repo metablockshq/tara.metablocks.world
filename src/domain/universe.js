@@ -27,7 +27,7 @@ const universeByPublicKey = (universes, publicKey) => {
 };
 
 const taraUniverseKey = new PublicKey(
-  "56AfWAaYWxKwLY4HbaanCjre6K8zvtLYy5v2465Wy3dd"
+  "FEEzZu8HyLL8ndvS32fprb6q5Ra6pTVFtSSJN9Wyk5Aj"
 );
 
 // WARNING: Don't use this op unless you want to send 500 requests to Solana
@@ -82,12 +82,16 @@ const depositNft = async ({ wallet, connection, metadata }) => {
   try {
     state.resetIn("depositingNft", true);
     const res = await api.depositNft({
-      wallet,
-      connection,
-      mintKey,
-      url: arweaveUrl,
-      isReceiptMasterEdition,
+      wallet: wallet,
+      connection: connection,
+      mintKey: mintKey,
       universeKey: taraUniverseKey,
+      receiptUrl: arweaveUrl,
+      receiptName: "receipt",
+      isReceiptMasterEdition: false,
+      metaNftUrl: arweaveUrl,
+      metaNftName: "meta",
+      isMetaNftMasterEdition: false,
     });
 
     state.resetIn("depositNftRes", res);
