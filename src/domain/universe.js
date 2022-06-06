@@ -87,10 +87,10 @@ const depositNft = async ({ wallet, connection, metadata }) => {
       mintKey: mintKey,
       universeKey: taraUniverseKey,
       receiptUrl: arweaveUrl,
-      receiptName: "receipt",
+      receiptName: "MetablocksReceiptNft",
       isReceiptMasterEdition: false,
       metaNftUrl: arweaveUrl,
-      metaNftName: "meta",
+      metaNftName: "MetablocksMetaNft",
       isMetaNftMasterEdition: false,
     });
 
