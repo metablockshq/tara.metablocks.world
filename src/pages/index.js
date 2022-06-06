@@ -203,12 +203,12 @@ const MetaNftLayer = ({ metadata }) => {
   if (isValidHttpUrl(uri)) {
     const { data, error, isLoading } = useResource(uri);
 
-    const zIndex = data?.attributes?.find(
-      (a) => a.trait_type === "zIndex"
-    ).value;
+    // const zIndex = data?.attributes?.find(
+    //   (a) => a.trait_type === "zIndex"
+    // ).value;
 
     return (
-      <div className="absolute" style={{ zIndex }}>
+      <div className="absolute">
         {!isLoading && !error && <img src={data.image} />}
       </div>
     );
@@ -222,7 +222,7 @@ const MetaNft = ({}) => {
 
   const inContractMetadata = Object.fromEntries(
     Object.entries(metadataFromMint).filter(
-      ([key, value]) => value.data.data.name === "MetablocksReceiptNft"
+      ([key, value]) => value.data.data.name === "MetablocksMetaNft"
     )
   );
 
@@ -260,7 +260,9 @@ const ViewNfts = () => {
 
   const inWalletMetadata = Object.fromEntries(
     Object.entries(metadataFromMint).filter(
-      ([key, value]) => value.data.data.name !== "MetablocksReceiptNft"
+      ([key, value]) =>
+        value.data.data.name !== "MetablocksReceiptNft" &&
+        value.data.data.name !== "MetablocksMetaNft"
     )
   );
 
