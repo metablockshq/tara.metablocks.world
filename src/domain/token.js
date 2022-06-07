@@ -1,7 +1,7 @@
 import { defAtom } from "@thi.ng/atom";
 import { Metadata } from "@metaplex-foundation/mpl-token-metadata";
 import { PublicKey } from "@solana/web3.js";
-
+import axios from "axios";
 import { publicKeys } from "~/config";
 
 const state = defAtom({
@@ -87,9 +87,66 @@ const getMetadataFromMint = (conn, mint) => {
     });
 };
 
+const RECEIPT_URL =
+  "https://ctvymyaq3e.execute-api.ap-south-1.amazonaws.com/Prod/receipt-shortener";
+
+const getShortenedReceiptUrl = async ({
+  arweaveUrl,
+  universeAddress,
+  walletAddress,
+}) => {
+  try {
+    const data = {
+      universeAddress: universeAddress,
+      walletAddress: walletAddress,
+      arweaveUrl: arweaveUrl,
+    };
+
+    console.log(data);
+
+    const result = await axios.post(RECEIPT_URL, data, {
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+    });
+
+    return result.data;
+  } catch (err) {
+    throw err;
+  }
+};
+
+const getMetaNftShortId = async ({
+  arweaveUrl,
+  universeAddress,
+  walletAddress,
+}) => {
+  try {
+    const data = {
+      universeAddress: universeAddress,
+      walletAddress: walletAddress,
+      metaNftUrl: arweaveUrl,
+    };
+
+    const result = await axios.post(RECEIPT_URL, data, {
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+    });
+
+    return result.data;
+  } catch (err) {
+    throw err;
+  }
+};
+
 export {
   getParsedProgramAccounts,
   getBalance,
   filterEmptyProgramAccounts,
   getMetadataFromMint,
+  getShortenedReceiptUrl,
+  getMetaNftShortId,
 };

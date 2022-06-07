@@ -203,12 +203,12 @@ const MetaNftLayer = ({ metadata }) => {
   if (isValidHttpUrl(uri)) {
     const { data, error, isLoading } = useResource(uri);
 
-    // const zIndex = data?.attributes?.find(
-    //   (a) => a.trait_type === "zIndex"
-    // ).value;
+    const zIndex = data?.attributes?.find(
+      (a) => a.trait_type === "zIndex"
+    ).value;
 
     return (
-      <div className="absolute">
+      <div className="absolute" style={{ zIndex }}>
         {!isLoading && !error && <img src={data.image} />}
       </div>
     );

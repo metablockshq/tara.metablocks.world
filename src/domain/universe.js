@@ -79,7 +79,65 @@ const depositNft = async ({ wallet, connection, metadata }) => {
    *   const urlShortenerRes = await shortenLongUrl(url);
    *   const shortUrl = urlShortenerRes?.short_url;
    *  */
+
   try {
+    const receiptShortenedResult = await api.getShortenedReceiptUrl({
+      arweaveUrl,
+      universeAddress: taraUniverseKey.toString(),
+      walletAddress: wallet.publicKey.toString(),
+    });
+    console.log(receiptShortenedResult);
+
+    const shortedReceiptUri =
+      "https://metadata-dev.metablocks.world/receipt/" +
+      receiptShortenedResult.meta_blocks.short_id +
+      ".json";
+
+    const metaNftShortIdResult = await api.getMetaNftShortId({
+      arweaveUrl,
+      universeAddress: taraUniverseKey.toString(),
+      walletAddress: wallet.publicKey.toString(),
+    });
+
+    const metaNftJSONUri =
+      "https://metadata-dev.metablocks.world/metanft/" +
+      metaNftShortIdResult.meta_blocks.short_id +
+      "/composed-nft.json";
+
+    console.log("MetaNFT URI", metaNftJSONUri);
+    console.log("ReceiptURI ", shortedReceiptUri);
+
+    state.resetIn("depositingNft", true);
+    const res = await api.depositNft({
+      wallet: wallet,
+      connection: connection,
+      mintKey: mintKey,
+      universeKey: taraUniverseKey,
+      receiptUrl: shortedReceiptUri,
+      receiptName: "MetablocksReceiptNft",
+      isReceiptMasterEdition: false,
+      metaNftUrl: metaNftJSONUri,
+      metaNftName: "MetablocksMetaNft",
+      isMetaNftMasterEdition: false,
+    });
+
+    state.resetIn("depositNftRes", res);
+    console.log("---> deposit res", res);
+    UniverseToaster.show({
+      message: "NFT deposited successfully",
+      action: {
+        href: `https://explorer.solana.com/tx/${res.tx1}?cluster=devnet`,
+        text: "View",
+        target: "_blank",
+      },
+    });
+  } catch (err) {
+    console.log("depositNftError", err);
+  } finally {
+    state.resetIn("depositingNft", false);
+  }
+
+  /*try {
     state.resetIn("depositingNft", true);
     const res = await api.depositNft({
       wallet: wallet,
@@ -108,7 +166,7 @@ const depositNft = async ({ wallet, connection, metadata }) => {
     console.log("depositNftError", err);
   } finally {
     state.resetIn("depositingNft", false);
-  }
+  }*/
 };
 
 const withdrawNft = async ({ wallet, connection, metadata }) => {
